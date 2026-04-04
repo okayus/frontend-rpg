@@ -20,22 +20,19 @@ const DELTA: Record<Direction, Position> = {
   right: { x: 1,  y: 0 },
 };
 
-// ── Key → Direction mapping ──
-// Map を module-level で定義 (js-index-maps)
+// ── KeyboardEvent.code → Direction mapping ──
+// e.key は IME オン時に 'Process' になるため、
+// 物理キー配置を表す e.code で判定する (js-index-maps)
 
-const KEY_TO_DIRECTION = new Map<string, Direction>([
+const CODE_TO_DIRECTION = new Map<string, Direction>([
   ['ArrowUp', 'up'],
   ['ArrowDown', 'down'],
   ['ArrowLeft', 'left'],
   ['ArrowRight', 'right'],
-  ['w', 'up'],
-  ['W', 'up'],
-  ['s', 'down'],
-  ['S', 'down'],
-  ['a', 'left'],
-  ['A', 'left'],
-  ['d', 'right'],
-  ['D', 'right'],
+  ['KeyW', 'up'],
+  ['KeyS', 'down'],
+  ['KeyA', 'left'],
+  ['KeyD', 'right'],
 ]);
 
 /**
@@ -82,7 +79,7 @@ export function usePlayerMovement(map: MapData) {
   });
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    const direction = KEY_TO_DIRECTION.get(e.key);
+    const direction = CODE_TO_DIRECTION.get(e.code);
     if (direction) {
       e.preventDefault();
       dispatch({ type: 'move', direction });
