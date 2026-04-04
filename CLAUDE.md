@@ -41,6 +41,21 @@ pnpm lint     # ESLint
 - ゲームデータ（マップ、敵など）はJSONまたはTSファイルで静的に定義する
 - CSS の最新機能を積極的に使う（Grid, Container Queries, `@layer`, `color-mix()`, View Transitions など）
 
+## 開発ワークフロー
+
+- **mainブランチは保護する** — mainに直接コミット・プッシュしない
+- 新しい機能や変更は必ず **featureブランチ** を作成して行う
+  1. `git checkout -b feature/<機能名>` でブランチ作成
+  2. 空コミット (`git commit --allow-empty -m "feat: <機能名>"`) を作成
+  3. 実装計画を本文に書いた **Draft PR** を作成（`gh pr create --draft`）
+  4. 実装を進め、完了したらレビュー依頼
+- ブランチ名規則: `feature/<機能名>`, `fix/<修正内容>`, `refactor/<対象>`
+
+## Claude Code 利用ルール
+
+- **React コンポーネントの実装・レビュー・リファクタ時は、必ず `vercel-react-best-practices` スキルを使用すること**（`/vercel-react-best-practices`）
+- これにより Vercel Engineering のパフォーマンス最適化ガイドラインに準拠した実装を保つ
+
 ## ディレクトリ構成（予定）
 
 ```
