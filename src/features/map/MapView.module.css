@@ -1,0 +1,146 @@
+/**
+ * マップ表示スタイル
+ *
+ * 学習ポイント:
+ * - CSS Grid Layout でタイルベースのマップを構築
+ * - @layer でスタイル優先度を管理
+ * - color-mix() でタイル色のバリエーションを生成
+ * - CSS Custom Properties でテーマ管理
+ * - container query でレスポンシブなタイルサイズ
+ */
+
+@layer map-base, map-tiles, map-player;
+
+/* ── ベースレイヤー ── */
+@layer map-base {
+  .mapContainer {
+    container-type: inline-size;
+    container-name: map;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .mapTitle {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #e2d9c5;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    margin: 0;
+  }
+
+  .grid {
+    --tile-size: 40px;
+    display: grid;
+    grid-template-columns: repeat(var(--map-cols), var(--tile-size));
+    grid-template-rows: repeat(var(--map-rows), var(--tile-size));
+    gap: 0;
+    border: 3px solid #5a4a3a;
+    border-radius: 4px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    image-rendering: pixelated;
+  }
+
+  /* container query でタイルサイズを調整 */
+  @container map (max-width: 600px) {
+    .grid {
+      --tile-size: 28px;
+    }
+  }
+
+  @container map (max-width: 400px) {
+    .grid {
+      --tile-size: 20px;
+    }
+  }
+}
+
+/* ── タイルレイヤー ── */
+@layer map-tiles {
+  .tile {
+    width: var(--tile-size);
+    height: var(--tile-size);
+    position: relative;
+    box-sizing: border-box;
+  }
+
+  /* 草地: 緑のバリエーションを color-mix() で生成 */
+  .tileGrass {
+    background-color: color-mix(in oklch, #4a8c3f 85%, #6aaf50);
+    /* 市松模様で草の質感を表現 */
+    &:nth-child(odd) {
+      background-color: color-mix(in oklch, #4a8c3f 75%, #6aaf50);
+    }
+  }
+
+  /* 壁: 石壁 */
+  .tileWall {
+    background-color: color-mix(in oklch, #7a736b 90%, #5a534b);
+    border: 1px solid color-mix(in oklch, #7a736b 60%, #3a332b);
+  }
+
+  /* 水: 青のグラデーション */
+  .tileWater {
+    background-color: color-mix(in oklch, #3a7abf 80%, #2a5a9f);
+    animation: waterShimmer 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes waterShimmer {
+    from {
+      background-color: color-mix(in oklch, #3a7abf 80%, #2a5a9f);
+    }
+    to {
+      background-color: color-mix(in oklch, #3a7abf 65%, #5a9adf);
+    }
+  }
+
+  /* 道: 土色 */
+  .tilePath {
+    background-color: color-mix(in oklch, #c4a96a 85%, #a48a4a);
+    &:nth-child(even) {
+      background-color: color-mix(in oklch, #c4a96a 75%, #a48a4a);
+    }
+  }
+
+  /* 木: 深緑 + 幹 */
+  .tileTree {
+    background-color: color-mix(in oklch, #2d5a1e 85%, #1a3a10);
+    /* 木の模様を box-shadow で表現 */
+    box-shadow: inset 0 6px 0 color-mix(in oklch, #3a7a28 80%, #2d5a1e);
+  }
+}
+
+/* ── プレイヤーレイヤー ── */
+@layer map-player {
+  .player {
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ffcc44, #dd8800);
+    border: 2px solid #aa6600;
+    z-index: 1;
+    /* 移動時のトランジション */
+    transition: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* ── 操作説明 ── */
+.controls {
+  font-size: 0.8rem;
+  color: #9a9080;
+  text-align: center;
+}
+
+kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  border: 1px solid #6a6050;
+  border-radius: 3px;
+  background: #3a3530;
+  color: #d4c8b0;
+  font-family: inherit;
+  font-size: 0.75rem;
+  margin: 0 2px;
+}
