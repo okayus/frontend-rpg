@@ -1,24 +1,74 @@
-/**
- * マップ表示スタイル
+/*
+ * MapView.module.css — マップ表示のスタイル定義。
  *
- * 学習ポイント:
- * - CSS Grid Layout でタイルベースのマップを構築
- * - @layer でスタイル優先度を管理
- * - color-mix() でタイル色のバリエーションを生成
- * - CSS Custom Properties でテーマ管理
- * - container query でレスポンシブなタイルサイズ
+ * 「CSS Modules」という仕組みで書かれている。
+ * なぜ CSS Modules？:
+ * - 通常のCSSはクラス名がページ全体で共有されるため、名前が衝突するリスクがある
+ *   （例: 別の場所で .grid というクラスを使っていたら上書きされてしまう）
+ * - CSS Modules では .grid が自動的に .MapView_grid_a1b2c のようなユニークな名前に変換される
+ * - ファイル名が *.module.css なのが CSS Modules の目印
+ *
+ * このファイルで学べるCSS最新機能:
+ * - @layer（カスケードレイヤー）: スタイルの優先度を明示的に管理
+ * - CSS Grid Layout: タイル状のマップをグリッドで配置
+ * - color-mix(): 2色を混ぜて新しい色を作る関数
+ * - CSS Custom Properties（変数）: --tile-size のような再利用可能な値
+ * - Container Queries: 親要素のサイズに応じてスタイルを変える
+ * - ネスト記法（&）: セレクタの入れ子書き
  */
 
+/*
+ * @layer — カスケードレイヤーの宣言。
+ * なぜ @layer を使う？:
+ * - CSSでは通常「後に書いたスタイルが勝つ」が、@layer を使うと
+ *   「どのレイヤーが優先されるか」を明示的にコントロールできる
+ * - ここでは map-base → map-tiles → map-player の順に優先度が上がる
+ *   → player レイヤーのスタイルが tiles レイヤーより常に優先される
+ * - なぜこの順番？: プレイヤーはタイルの上に表示したいので、player を最後（最高優先度）にする
+ *
+ * 実用例: ライブラリのCSSを低いレイヤーに、自分のCSSを高いレイヤーに置くと、
+ * ライブラリのスタイルを確実に上書きできる。
+ */
 @layer map-base, map-tiles, map-player;
 
-/* ── ベースレイヤー ── */
+/* ══════════════════════════════════════════
+ *  ベースレイヤー — マップ全体の構造を定義
+ * ══════════════════════════════════════════ */
 @layer map-base {
   .mapContainer {
+    /*
+     * container-type: inline-size — この要素を Container Query のコンテナにする。
+     * なぜ？:
+     * - Container Query は「この要素の幅が◯◯px以下なら〜」というスタイル切り替えができる
+     * - メディアクエリ（@media）は「画面全体の幅」しか見られないが、
+     *   Container Query は「この要素の幅」を見る → コンポーネント単位でレスポンシブにできる
+     * - inline-size は「横幅だけ」を監視する。block-size（縦幅も）を監視すると
+     *   レイアウト計算が重くなるため、必要最小限の inline-size を選ぶ
+     */
     container-type: inline-size;
+
+    /*
+     * container-name: map — コンテナに名前をつける。
+     * なぜ？: @container map (...) のようにクエリで「どのコンテナを基準にするか」を指定できる。
+     * コンテナが入れ子になった場合に、意図しない親コンテナを参照するのを防ぐ。
+     */
     container-name: map;
+
+    /*
+     * display: flex + flex-direction: column — 子要素を縦に並べる。
+     * なぜ？: タイトル → マップ本体 → 操作説明 を上から順に配置するため。
+     * align-items: center で横方向の中央揃えにする。
+     */
     display: flex;
     flex-direction: column;
     align-items: center;
+
+    /*
+     * gap: 12px — Flexbox の子要素間にスペースを空ける。
+     * なぜ gap？:
+     * - margin で間隔を空けるより gap のほうがシンプル（最初と最後の要素に余分な余白がつかない）
+     * - gap は Grid でも Flexbox でも使える
+     */
     gap: 12px;
   }
 
@@ -26,67 +76,213 @@
     font-size: 1.2rem;
     font-weight: 600;
     color: #e2d9c5;
+
+    /*
+     * text-shadow — テキストに影をつける。
+     * 1px 1px 2px rgba(0,0,0,0.5) = 右に1px、下に1px、ぼかし2px、半透明の黒。
+     * なぜ？: ダーク背景では文字が埋もれがちなので、影をつけて浮き上がらせる。
+     */
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+
+    /*
+     * margin: 0 — <h2> のデフォルト margin を消す。
+     * なぜ？: ブラウザは見出し要素に上下の margin をデフォルトで付けるが、
+     * ここでは gap で間隔を管理しているため、デフォルトの margin は邪魔になる。
+     */
     margin: 0;
+
+    /*
+     * white-space: nowrap — テキストを折り返さない。
+     * なぜ？: マップタイトルが途中で改行されると見た目が崩れるため。
+     */
     white-space: nowrap;
   }
 
   .grid {
+    /*
+     * --tile-size: 40px — CSS カスタムプロパティ（CSS変数）でタイルの大きさを定義。
+     * なぜ変数にする？:
+     * - タイルの幅・高さの両方でこの値を使い回すため
+     * - Container Query でこの値だけ変えれば、マップ全体のサイズが変わる
+     * - ハードコードせず変数にすることで、一箇所の変更で全体に反映される
+     */
     --tile-size: 40px;
+
+    /*
+     * display: grid — CSS Grid Layout を有効にする。
+     * なぜ Grid？:
+     * - タイルマップは「行×列」の2次元レイアウト → Grid が最適
+     * - Flexbox は1次元（横一列 or 縦一列）が得意だが、2次元は Grid のほうが自然
+     *
+     * grid-template-columns: repeat(var(--map-cols), var(--tile-size))
+     * → 「--map-cols 個のカラムを、各 --tile-size の幅で作る」
+     * 例: --map-cols が 16 なら → 40px を 16 列 = 640px 幅のグリッドになる
+     *
+     * grid-template-rows も同様に行数 × タイルサイズを定義。
+     *
+     * なぜ var(--map-cols) を使う？:
+     * - マップのサイズは JavaScript（React）側のデータで決まる
+     * - JSからCSS変数としてグリッドの列数・行数を渡すことで、
+     *   CSSを書き換えなくてもマップサイズを動的に変えられる
+     */
     display: grid;
     grid-template-columns: repeat(var(--map-cols), var(--tile-size));
     grid-template-rows: repeat(var(--map-rows), var(--tile-size));
+
+    /*
+     * gap: 0 — タイル間に隙間を作らない。
+     * なぜ明示的に 0？: Grid のデフォルトは 0 だが、意図を明確にするために書いている。
+     * タイルが隙間なく並ぶことでマップらしい見た目になる。
+     */
     gap: 0;
+
+    /*
+     * border: 3px solid #5a4a3a — マップ全体を囲む茶色い枠線。
+     * なぜ？: ゲームマップの「額縁」のような見た目にして、マップの境界を明確にする。
+     */
     border: 3px solid #5a4a3a;
+
+    /*
+     * border-radius: 4px — 角を少しだけ丸める。
+     * なぜ 4px？: 完全な直角は硬い印象。4px程度の微妙な丸みで柔らかさを出す。
+     * ゲームUIでよく使われるテクニック。
+     */
     border-radius: 4px;
+
+    /*
+     * box-shadow — 要素の外側に影をつける。
+     * 0 4px 16px rgba(0,0,0,0.4) = 右0、下4px、ぼかし16px、半透明の黒。
+     * なぜ？: マップが背景から浮いているような立体感を出す。
+     * ぼかしが大きいほどふわっとした柔らかい影になる。
+     */
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+
+    /*
+     * image-rendering: pixelated — 画像を拡大したときにぼかさずドット絵風にする。
+     * なぜ？: 将来タイルに画像を使う場合に、レトロゲーム風のくっきりした表示にするため。
+     * デフォルトではブラウザが画像を滑らかに補間するが、ドット絵にはそれが不要。
+     */
     image-rendering: pixelated;
   }
 
-  /* container query でタイルサイズを調整 */
+  /*
+   * @container map (max-width: 600px) — Container Query。
+   * なぜ @media ではなく @container？:
+   * - @media (max-width: 600px) は「画面全体の幅が600px以下」の時に適用
+   * - @container map (max-width: 600px) は「.mapContainer の幅が600px以下」の時に適用
+   * - マップが画面全体を占めていない場合（サイドバーがある等）でも正しく動作する
+   * - コンポーネントが「自分の親のサイズ」に応じてスタイルを変えられるのが利点
+   */
   @container map (max-width: 600px) {
     .grid {
+      /* 画面が狭い → タイルを小さくしてマップ全体を収める */
       --tile-size: 28px;
     }
   }
 
   @container map (max-width: 400px) {
     .grid {
+      /* さらに狭い画面ではさらに小さく */
       --tile-size: 20px;
     }
   }
 }
 
-/* ── タイルレイヤー ── */
+/* ══════════════════════════════════════════
+ *  タイルレイヤー — 各タイル種別の見た目を定義
+ * ══════════════════════════════════════════ */
 @layer map-tiles {
   .tile {
+    /*
+     * width, height に var(--tile-size) を使い、すべてのタイルを同じサイズにする。
+     * Grid のセルサイズと合わせることで、ぴったりはまる。
+     */
     width: var(--tile-size);
     height: var(--tile-size);
+
+    /*
+     * position: relative — この要素を「位置の基準点」にする。
+     * なぜ？:
+     * - プレイヤーの丸い表示（.player）を position: absolute で配置するとき、
+     *   「どの要素を基準にするか」が必要
+     * - relative を指定すると、子要素の absolute がこのタイルを基準に配置される
+     * - relative 自体は要素の位置を変えない（見た目は変わらない）
+     */
     position: relative;
+
+    /*
+     * box-sizing: border-box — border を幅の内側に含める。
+     * なぜ？: 壁タイル(.tileWall)に border を付けたとき、
+     * border-box がないと border 分だけタイルが大きくなり、グリッドからはみ出してしまう。
+     */
     box-sizing: border-box;
   }
 
-  /* 草地: 緑のバリエーションを color-mix() で生成 */
+  /*
+   * 草地タイル — color-mix() で色のバリエーションを作る。
+   *
+   * color-mix() とは？:
+   * - 2つの色を指定した割合で混ぜる CSS 関数
+   * - color-mix(in oklch, #4a8c3f 85%, #6aaf50) は
+   *   「oklch 色空間で、#4a8c3f を85%、#6aaf50 を15% 混ぜた色」になる
+   *
+   * なぜ oklch 色空間？:
+   * - sRGB で混ぜると、中間色がくすんで見えることがある（例: 赤+青→灰色っぽい紫）
+   * - oklch は人間の知覚に基づいた色空間で、混ぜた結果がより自然に見える
+   * - 明度(L)・彩度(C)・色相(H)で色を扱うため、「少し明るく」「少し鮮やかに」が直感的
+   */
   .tileGrass {
     background-color: color-mix(in oklch, #4a8c3f 85%, #6aaf50);
-    /* 市松模様で草の質感を表現 */
+
+    /*
+     * &:nth-child(odd) — CSS ネスト記法 + 擬似クラス。
+     *
+     * & は「親セレクタ（.tileGrass）自身」を表す。
+     * → .tileGrass:nth-child(odd) と同じ意味。
+     *
+     * :nth-child(odd) は「奇数番目の要素」を選択する。
+     * なぜ？: タイルの色を1つおきに少し変えることで、のっぺりせず草地の質感が出る。
+     * チェス盤の市松模様と同じアイデア。
+     */
     &:nth-child(odd) {
       background-color: color-mix(in oklch, #4a8c3f 75%, #6aaf50);
     }
   }
 
-  /* 壁: 石壁 */
+  /* 壁タイル — 石壁の見た目 */
   .tileWall {
     background-color: color-mix(in oklch, #7a736b 90%, #5a534b);
+
+    /*
+     * border で壁タイルに立体感を出す。
+     * 背景色より暗い色の border → 凹んだ石のブロック風の見た目になる。
+     * color-mix() で背景と同系色の暗い色を作っている。
+     */
     border: 1px solid color-mix(in oklch, #7a736b 60%, #3a332b);
   }
 
-  /* 水: 青のグラデーション */
+  /* 水タイル — アニメーションで揺らめきを表現 */
   .tileWater {
     background-color: color-mix(in oklch, #3a7abf 80%, #2a5a9f);
+
+    /*
+     * animation — CSS アニメーションを適用する。
+     * waterShimmer: アニメーション名（@keyframes で定義）
+     * 2s: 1サイクルの時間（2秒で色が変わりきる）
+     * ease-in-out: 動きの緩急（ゆっくり始まり→加速→ゆっくり終わる）
+     *   → 自然な波の揺らめき感が出る。linear だと機械的に見える
+     * infinite: 永遠に繰り返す
+     * alternate: 行き→戻り→行き→…と往復する
+     *   → alternate がないと「行き→ジャンプして最初→行き→…」となりガタつく
+     */
     animation: waterShimmer 2s ease-in-out infinite alternate;
   }
 
+  /*
+   * @keyframes — アニメーションの動きを定義する。
+   * from (= 0%) と to (= 100%) で開始と終了の状態を指定。
+   * ここでは背景色を少し明るい青に変化させることで、水面の光の揺らめきを表現。
+   */
   @keyframes waterShimmer {
     from {
       background-color: color-mix(in oklch, #3a7abf 80%, #2a5a9f);
@@ -96,55 +292,168 @@
     }
   }
 
-  /* 道: 土色 */
+  /* 道タイル — 土色の道 */
   .tilePath {
     background-color: color-mix(in oklch, #c4a96a 85%, #a48a4a);
+
+    /* 草地と同じく偶数番目で色を変えて、道の質感を出す */
     &:nth-child(even) {
       background-color: color-mix(in oklch, #c4a96a 75%, #a48a4a);
     }
   }
 
-  /* 木: 深緑 + 幹 */
+  /* 木タイル — 深緑の森 */
   .tileTree {
     background-color: color-mix(in oklch, #2d5a1e 85%, #1a3a10);
-    /* 木の模様を box-shadow で表現 */
+
+    /*
+     * box-shadow: inset — 要素の「内側」に影をつける。
+     * inset がないと外側に影が出る。
+     * 0 6px 0 color = 上から6pxの位置に色を付ける → 木の葉が上にあるような見た目。
+     * ぼかし(3番目の値)が 0 なのでくっきりした帯状になる。
+     * CSSだけで画像を使わずに木の表現をするテクニック。
+     */
     box-shadow: inset 0 6px 0 color-mix(in oklch, #3a7a28 80%, #2d5a1e);
   }
 }
 
-/* ── プレイヤーレイヤー ── */
+/* ══════════════════════════════════════════
+ *  プレイヤーレイヤー — キャラクターの表示
+ * ══════════════════════════════════════════ */
 @layer map-player {
   .player {
+    /*
+     * position: absolute — 通常のドキュメントフローから外れて、自由な位置に配置する。
+     * なぜ？:
+     * - タイルの上にプレイヤーを「重ねて」表示したい
+     * - absolute は「最も近い position: relative/absolute/fixed を持つ親要素」を基準にする
+     * - 親の .tile に position: relative があるので、そのタイル内に配置される
+     */
     position: absolute;
+
+    /*
+     * inset: 3px — top, right, bottom, left すべてに 3px を一括指定するショートハンド。
+     * → タイルの各辺から 3px 内側に配置 = タイルより少し小さい円になる。
+     * なぜ inset？:
+     * - top: 3px; right: 3px; bottom: 3px; left: 3px; を1行で書ける
+     * - width/height を直接指定するより、タイルサイズが変わっても自動調整される
+     */
     inset: 3px;
+
+    /*
+     * border-radius: 50% — 要素を正円にする。
+     * なぜ 50%？: 正方形の要素に 50% の border-radius をつけると完全な円になる。
+     * プレイヤーを丸い点として表示するため。
+     */
     border-radius: 50%;
+
+    /*
+     * background: radial-gradient() — 円形のグラデーション。
+     * circle at 35% 35%: 円の中心を左上寄り（35%, 35%）に置く
+     * #ffcc44 → #dd8800: 明るい黄色から暗いオレンジへグラデーション
+     * なぜ中心を左上にずらす？:
+     * - 光が左上から当たっているような立体感（球体感）が出る
+     * - 中央(50%, 50%)だと平面的に見える
+     * 画像を使わずにCSSだけでキャラクターを表現するテクニック。
+     */
     background: radial-gradient(circle at 35% 35%, #ffcc44, #dd8800);
+
+    /*
+     * border: 2px solid #aa6600 — 円の輪郭線。
+     * なぜ？: 背景色との境界をはっきりさせ、キャラクターの存在感を高める。
+     */
     border: 2px solid #aa6600;
+
+    /*
+     * z-index: 1 — 要素の重なり順を指定する。
+     * なぜ？: プレイヤーが他のタイル装飾（box-shadow など）の上に確実に表示されるようにする。
+     * 数値が大きいほど手前に表示される。
+     */
     z-index: 1;
-    /* 移動時のトランジション */
+
+    /*
+     * transition: none — CSSトランジション（アニメーション）を無効化。
+     * なぜ none？:
+     * - プレイヤーはタイル間を移動する（= 別のDOMに表示される）ので、
+     *   CSSトランジションでは滑らかな移動アニメーションはできない
+     * - 将来的に移動アニメーションを付ける場合は JavaScript 側で制御する必要がある
+     * - 明示的に none と書くことで「意図的にアニメーションなし」であることを示す
+     */
     transition: none;
+
+    /*
+     * box-shadow — プレイヤーの丸の下に薄い影をつけて、浮いている感じを出す。
+     */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   }
 }
 
-/* ── 操作説明 ── */
+/* ══════════════════════════════════════════
+ *  操作説明 — キーボード操作のガイド表示
+ *  ※ @layer の外に書かれている。
+ *  なぜ？: @layer の外のスタイルは、どのレイヤーよりも優先度が高い。
+ *  操作説明はマップの描画とは独立した表示なので、レイヤー管理に含めていない。
+ * ══════════════════════════════════════════ */
 .controls {
   font-size: 0.8rem;
   color: #9a9080;
   text-align: center;
-  /* flex の align-items: center で幅が縮むのを防ぐ */
+
+  /*
+   * align-self: stretch — Flexbox の子要素の幅を親いっぱいに広げる。
+   * なぜ？:
+   * - 親(.mapContainer)の align-items: center により、子要素は中央寄せ＝幅が縮む
+   * - align-self: stretch で「この要素だけは」幅を広げる
+   * - stretch にしないと、テキストの幅に縮んでしまい改行されやすくなる
+   */
   align-self: stretch;
+
+  /*
+   * white-space: nowrap — テキストを1行に保つ。
+   * なぜ？: 「↑↓←→ または WASD で移動」が途中で改行されると読みにくいため。
+   */
   white-space: nowrap;
 }
 
+/*
+ * kbd — キーボードのキーを示す HTML 要素のスタイル。
+ * <kbd> は「キーボード入力」を意味するセマンティック（意味的な）タグ。
+ * なぜ <span> ではなく <kbd>？:
+ * - HTMLには「この文字列はキーボードのキーを表す」という意味のタグがある
+ * - スクリーンリーダーが「キーボードキー」として読み上げてくれる可能性がある
+ * - 意味に合ったタグを使うことで、コードの意図が明確になる（セマンティクス）
+ */
 kbd {
+  /*
+   * display: inline-block — インライン要素だが、width/height/padding が効くようにする。
+   * なぜ？:
+   * - <kbd> はデフォルトで inline（テキストと同じ扱い）
+   * - inline だと上下の padding が他の行に食い込んでしまう
+   * - inline-block にすると「テキストの流れに沿いつつ、ブロックのようにサイズ指定できる」
+   */
   display: inline-block;
+
+  /* padding で内側に余白を作り、キーキャップ風の見た目にする */
   padding: 2px 6px;
+
+  /*
+   * border + border-radius + background で物理キーボードのキーキャップ風の見た目を作る。
+   * 暗い背景に少し明るいボーダー → キーが浮き上がって見える。
+   */
   border: 1px solid #6a6050;
   border-radius: 3px;
   background: #3a3530;
   color: #d4c8b0;
+
+  /*
+   * font-family: inherit — 親要素のフォントを引き継ぐ。
+   * なぜ？: <kbd> はブラウザによってはデフォルトで monospace（等幅）フォントになるが、
+   * ここではゲームUIの統一感のため、周囲と同じフォントにしたい。
+   */
   font-family: inherit;
+
   font-size: 0.75rem;
+
+  /* margin: 0 2px — 左右に少しだけ間隔を空けて、キー同士が密着しないようにする */
   margin: 0 2px;
 }

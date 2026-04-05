@@ -1,13 +1,90 @@
+<!--
+  index.html — アプリケーション全体のエントリーポイント（入口）となるHTMLファイル。
+  ブラウザが最初に読み込むファイルで、ここからJavaScript（React）が起動する。
+-->
+
+<!--
+  <!doctype html> — 「このファイルはHTML5で書かれています」とブラウザに宣言する。
+  なぜ必要？: これがないとブラウザは「後方互換モード（Quirks Mode）」で動作し、
+  CSSのレイアウト計算などが古い仕様で処理されてしまう。
+  必ずファイルの先頭に書く。
+-->
 <!doctype html>
+
+<!--
+  <html lang="en"> — HTML文書のルート（最上位）要素。
+  lang="en" は「このページの主な言語は英語」という宣言。
+  なぜ必要？:
+  - スクリーンリーダー（視覚障害者向け読み上げソフト）が正しい発音で読み上げるために使う
+  - 検索エンジンがページの言語を判定するために使う
+  - ブラウザの自動翻訳機能が動作する基準になる
+  ※日本語サイトなら lang="ja" にする。このプロジェクトはViteのテンプレートをベースにしているため en のまま。
+-->
 <html lang="en">
+  <!--
+    <head> — ページの「メタ情報」を置く場所。画面には表示されない。
+    文字コード、タイトル、外部ファイルの読み込み指定などをここに書く。
+  -->
   <head>
+    <!--
+      <meta charset="UTF-8" /> — 文字エンコーディングを UTF-8 に指定する。
+      なぜ UTF-8？:
+      - 日本語・絵文字・世界中の文字を正しく表示できる
+      - 現在のWeb標準ではUTF-8がデフォルト。指定しないと文字化けの原因になる
+      なぜ <head> の先頭？:
+      - ブラウザはこの宣言を見てから文字の解釈を始めるため、できるだけ早く（先頭に）書く
+    -->
     <meta charset="UTF-8" />
+
+    <!--
+      <link rel="icon" ...> — ブラウザのタブに表示される小さなアイコン（ファビコン）を指定する。
+      type="image/svg+xml" — アイコンの形式がSVGであることを示す。
+      なぜ SVG？: PNGと違い拡大縮小してもぼやけず、ファイルサイズも小さいため。
+      href="/favicon.svg" — public/ フォルダにある favicon.svg を参照。
+    -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!--
+      <meta name="viewport" ...> — モバイル端末での表示を制御する重要な設定。
+      なぜ必要？:
+      - これがないとスマホではページがPC向けの幅（通常980px）で縮小表示される
+      - width=device-width: ページの幅をデバイスの画面幅に合わせる
+      - initial-scale=1.0: 初期ズーム倍率を100%（等倍）にする
+      レスポンシブデザインには必須の記述。
+    -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!--
+      <title> — ブラウザのタブに表示されるページタイトル。
+      検索結果やブックマークにも使われるので、わかりやすい名前にする。
+    -->
     <title>frontend-rpg</title>
   </head>
+
+  <!--
+    <body> — ページに実際に表示される内容を書く場所。
+    ユーザーが目にするすべてのUI要素はこの中に入る。
+  -->
   <body>
+    <!--
+      <div id="root"> — Reactアプリが描画される「マウントポイント」。
+      なぜ空の div？:
+      - React はJavaScriptでUIを動的に生成する。HTMLには空の入れ物だけ用意しておき、
+        JavaScriptが実行されてからこの中にコンポーネントが描画される。
+      id="root" は main.tsx の document.getElementById('root') と対応している。
+    -->
     <div id="root"></div>
+
+    <!--
+      <script type="module" src="/src/main.tsx"> — アプリケーションのJavaScriptを読み込む。
+      なぜ type="module"？:
+      - ES Modules（import/export 構文）を使うことをブラウザに伝える
+      - module指定されたスクリプトは自動的に defer（HTML解析完了後に実行）される
+        → <div id="root"> が確実に存在してからスクリプトが動く
+      なぜ .tsx を直接指定？:
+      - 開発時はViteが裏でTypeScript→JavaScriptの変換をリアルタイムで行うため、
+        ソースファイルを直接指定できる（ビルド時は自動的にJSに変換される）
+    -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -1,22 +1,131 @@
+/*
+ * index.css — アプリ全体に適用されるグローバルスタイル。
+ * ページ全体の配色、フォント、レイアウトの土台をここで定義する。
+ */
+
+/*
+ * :root — HTML文書のルート要素（<html>）を指す特別なセレクタ。
+ * なぜ :root に書く？:
+ * - ここに定義したプロパティはページ全体に継承される
+ * - CSS変数（カスタムプロパティ）を定義する場所としても使われる
+ */
 :root {
+  /*
+   * color-scheme: dark — 「このサイトはダークテーマです」とブラウザに宣言する。
+   * なぜ必要？:
+   * - ブラウザ標準のUI要素（スクロールバー、フォーム部品など）が自動的にダーク配色になる
+   * - これがないとダーク背景に白いスクロールバーが表示されて見た目が浮いてしまう
+   * - light / dark / light dark（両対応）を指定できる
+   */
   color-scheme: dark;
+
+  /*
+   * font-family — 使用するフォントを優先順に指定する。
+   * なぜこの順番？:
+   * - system-ui: OSのシステムフォントを使う（Windows→Segoe UI、Mac→San Francisco など）
+   *   → ユーザーが見慣れたフォントで表示されるため、読みやすく表示も高速
+   * - 'Segoe UI', Roboto: system-ui に対応していない古いブラウザ用のフォールバック
+   * - sans-serif: 最終手段。上のどれもなければゴシック体系のフォントを使う
+   * なぜ Web フォントを使わない？:
+   * - 追加のファイルダウンロードが不要で、表示が速い
+   * - ゲームUIにはシステムフォントで十分
+   */
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+
+  /*
+   * -webkit-font-smoothing: antialiased — macOS/iOS のフォント描画を滑らかにする。
+   * -moz-osx-font-smoothing: grayscale — Firefox(macOS) での同等の設定。
+   * なぜ必要？:
+   * - ダーク背景では、デフォルトのサブピクセルレンダリングだとテキストが太く見える
+   * - antialiased にするとスッキリした見た目になる
+   * - ライトテーマでは逆に細く見えすぎるので、ダークテーマ特有の設定
+   */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 body {
+  /*
+   * margin: 0 — ブラウザのデフォルト余白を消す。
+   * なぜ？: ほとんどのブラウザは body に 8px 程度のデフォルト margin を持っている。
+   * これを消さないと画面の端に意図しない隙間ができてしまう。
+   * CSSリセットの最も基本的な設定。
+   */
   margin: 0;
+
+  /*
+   * background: #1a1a2e — ページ全体の背景色。暗い紺色。
+   * なぜこの色？: ファンタジーRPGの夜・ダンジョンの雰囲気を出すため。
+   * 完全な黒(#000)よりも柔らかく、目が疲れにくい。
+   */
   background: #1a1a2e;
+
+  /*
+   * color: #e0d8c8 — テキストの色。暖かみのあるオフホワイト。
+   * なぜ純白(#fff)ではない？:
+   * - 暗い背景に純白は目がチカチカする（コントラストが強すぎる）
+   * - 少しベージュがかった色にすることで、羊皮紙やファンタジー風の雰囲気も出る
+   */
   color: #e0d8c8;
+
+  /*
+   * min-height: 100svh — ページの最小の高さをビューポート（表示領域）の100%にする。
+   * なぜ 100vh ではなく 100svh？:
+   * - vh（viewport height）はモバイルブラウザでアドレスバーの高さを含んでしまい、
+   *   画面からはみ出ることがある
+   * - svh（small viewport height）はアドレスバーが表示されている状態の高さを基準にする
+   *   → モバイルでもはみ出さない、より安全な単位
+   * なぜ height ではなく min-height？:
+   * - height: 100svh だと、コンテンツが画面より長い場合にはみ出す
+   * - min-height なら「最低でも画面いっぱい、コンテンツが多ければ伸びる」
+   */
   min-height: 100svh;
 }
 
 #root {
+  /*
+   * display: flex — Flexbox レイアウトを有効にする。
+   * なぜ Flexbox？:
+   * - 子要素を縦横の中央に配置するのが簡単にできる
+   * - justify-content と align-items の2行だけで中央寄せが完成する
+   */
   display: flex;
+
+  /*
+   * justify-content: center — 主軸（横方向）の中央に配置。
+   * align-items: center — 交差軸（縦方向）の中央に配置。
+   * この2つのセットで、子要素が画面のど真ん中に来る。
+   * なぜこの方法？:
+   * - 昔は position: absolute + transform で中央寄せしていたが、Flexbox ならシンプルに書ける
+   * - Grid の place-items: center でも可能だが、ここでは単純な中央寄せなので Flexbox で十分
+   */
   justify-content: center;
   align-items: center;
+
+  /*
+   * min-height: 100svh — #root 自体も画面いっぱいの高さを確保する。
+   * なぜ body と #root の両方に？:
+   * - body の min-height だけでは、#root が body の高さを引き継がないことがある
+   * - #root にも指定することで、Flexbox の align-items: center が正しく機能する
+   *   （高さがないと「縦方向の中央」が計算できない）
+   */
   min-height: 100svh;
+
+  /*
+   * padding: 16px — 内側に余白を確保する。
+   * なぜ？: 画面端ギリギリにコンテンツが来ると窮屈に見えるため。
+   * 特にモバイルで重要 — マップが画面端に張り付くのを防ぐ。
+   */
   padding: 16px;
+
+  /*
+   * box-sizing: border-box — padding を幅・高さの内側に含める。
+   * なぜ？:
+   * - デフォルト（content-box）だと padding: 16px を足すと合計幅が 100% + 32px になり、
+   *   横スクロールが発生してしまう
+   * - border-box にすると「幅 100% の中に padding 16px を含める」計算になる
+   * - 現代のCSSでは *, *::before, *::after { box-sizing: border-box } を
+   *   グローバルに設定するのが一般的。ここでは #root にだけ必要なので個別指定。
+   */
   box-sizing: border-box;
 }
